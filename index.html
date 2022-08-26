@@ -7,41 +7,22 @@
     <title>Document</title>
   </head>
   <body>
-    <canvas id="canvas" style="border: solid 3px red"></canvas>
+    <canvas id="yaboi" style="border: solid 3px red"></canvas>
     <br />
+    <img src="./sig.png" alt="" />
   </body>
 
   <script>
-    const canvas = document.querySelector('#canvas');
-    const myImg = new Image();
-    myImg.src = './sig.png';
-    myImg.onload = () => {
-      canvas.height = myImg.height;
-      canvas.width = myImg.width;
-      const context = canvas.getContext('2d');
-      context.drawImage(myImg, 0, 0);
-      const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
-      let row = 0;
-      let column = 0;
-      console.log(canvas.width);
-      const coords = [];
-      for (var i = 0, n = data.length; i < n; i += 4) {
-        // return;
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const a = data[i + 3];
-        // console.log(`${r},${g},${b},${a}`);
-        if (r + g + b !== 0) {
-          coords.push({ x: row, y: column });
-        }
-        if (column !== 0 && column % canvas.width === 0) {
-          row++;
-          column = 0;
-        }
-        column++;
-      }
-      console.log(coords);
-    };
+    const yaBoi = document.getElementById('yaboi');
+    const ctx = yaBoi.getContext('2d');
+
+    ctx.beginPath();
+    ctx.moveTo(10, 30);
+    ctx.lineTo(30, 0);
+    ctx.lineTo(50, 30);
+    ctx.moveTo(20, 13);
+    ctx.lineTo(40, 13);
+
+    ctx.stroke();
   </script>
 </html>
