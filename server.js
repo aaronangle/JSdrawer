@@ -11,9 +11,10 @@ port.open(function (err) {
 
   setTimeout(() => {
     passNextCoord();
-  }, 6000);
+  }, 7000);
 
   parser.on('data', function (data) {
+    console.log('receiving' + data);
     if (data.trim() === 'done') {
       passNextCoord();
     }
@@ -21,8 +22,8 @@ port.open(function (err) {
 
   function passNextCoord() {
     const nextCoords = `${coords[index].x},${coords[index].y}`;
-    console.log(index);
-    port.write(nextCoords);
+    console.log('writing' + nextCoords);
+    port.write(nextCoords + '\n');
 
     if (index !== coords.length - 1) {
       index++;

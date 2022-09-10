@@ -8,6 +8,7 @@
   </head>
 
   <body>
+    <p>Picture will invert y axis because y axis is starts in top left versus how a graph starts on bottom left</p>
     <canvas id="canvas" style="border: solid 3px red"></canvas>
     <canvas id="canvas2" style="border: solid 3px red"></canvas>
     <br />
@@ -24,6 +25,7 @@
       canvas.width = myImg.width;
       canvas2.width = myImg.width;
       const context = canvas.getContext('2d');
+      context.transform(1, 0, 0, -1, 0, canvas.height);
       context.drawImage(myImg, 0, 0);
       const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
       let row = 0;
@@ -46,6 +48,7 @@
       }
 
       var ctx = canvas2.getContext('2d');
+      ctx.transform(1, 0, 0, -1, 0, canvas2.height);
 
       const sortedCoords = coords.sort((a, b) => {
         if (a.x < b.x) {
