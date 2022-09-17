@@ -9,20 +9,24 @@ port.open(function (err) {
   let index = 0;
   const coords = JSON.parse(fs.readFileSync('./data.json', 'utf-8'));
 
+  coords.push({ x: 0, y: 0 });
+
   setTimeout(() => {
     passNextCoord();
   }, 7000);
 
   parser.on('data', function (data) {
-    console.log('receiving' + data);
     if (data.trim() === 'done') {
       passNextCoord();
+    } else {
+      console.log('receiving' + data);
     }
   });
 
   function passNextCoord() {
+    // const nextCoords = `-400,-400`;
     const nextCoords = `${coords[index].x},${coords[index].y}`;
-    console.log('writing' + nextCoords);
+    // console.log('writing' + nextCoords);
     port.write(nextCoords + '\n');
 
     if (index !== coords.length - 1) {

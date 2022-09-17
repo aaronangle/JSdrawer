@@ -9,16 +9,28 @@
 
   <body>
     <p>Picture will invert y axis because y axis is starts in top left versus how a graph starts on bottom left</p>
+    <button id="download">Download</button>
+    <br />
     <canvas id="canvas" style="border: solid 3px red"></canvas>
     <canvas id="canvas2" style="border: solid 3px red"></canvas>
     <br />
   </body>
 
   <script>
+    var startTime = performance.now();
     const canvas = document.querySelector('#canvas');
     const canvas2 = document.querySelector('#canvas2');
     const myImg = new Image();
-    myImg.src = './sig.png';
+    myImg.src = './images/sig.png';
+
+    let sortedCoords = [];
+
+    const downloadButton = document.querySelector('#download');
+
+    downloadButton.addEventListener('click', function () {
+      download(JSON.stringify(sortedCoords), 'data.json', 'json');
+    });
+
     myImg.onload = async () => {
       canvas.height = myImg.height;
       canvas2.height = myImg.height;
@@ -37,7 +49,7 @@
         const b = data[i + 2];
         const a = data[i + 3];
         const add = r + g + b;
-        if (add < 250 && a !== 0) {
+        if (add < 750 && a !== 0) {
           coords.push({ x: column, y: row });
         }
         if (column !== 0 && column % canvas.width === 0) {
@@ -47,10 +59,14 @@
         column++;
       }
 
+      console.log(coords.length);
+
       var ctx = canvas2.getContext('2d');
       ctx.transform(1, 0, 0, -1, 0, canvas2.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(0.5, 0.5);
 
-      const sortedCoords = coords.sort((a, b) => {
+      const sort = coords.sort((a, b) => {
         if (a.x < b.x) {
           return -1;
         }
@@ -59,25 +75,96 @@
         }
         return 0;
       });
-      download(JSON.stringify(sortedCoords), 'data.json', 'json');
+
+      const chunkSize = 30000;
+      for (let i = 0; i < sort.length; i += chunkSize) {
+        const chunk = sort.slice(i, i + chunkSize);
+        sortedCoords = [...sortedCoords, ...sortTouchingCoords(chunk)];
+      }
+
       ctx.beginPath();
 
       ctx.moveTo(sortedCoords[0].x, sortedCoords[0].y);
 
+      let penPickUps = 0;
+
       sortedCoords.forEach((coord, index) => {
         ctx.lineTo(coord.x, coord.y);
 
-        if (coords[index + 1] && coords[index + 1].x) {
-          const nextY = coords[index + 1].y;
-          if (nextY !== coord.y + 1 && nextY !== coord.y - 1) {
-            ctx.moveTo(coords[index + 1].x, coords[index + 1].y);
+        if (sortedCoords[index + 1] && sortedCoords[index + 1].x) {
+          const nextY = sortedCoords[index + 1].y;
+          const nextX = sortedCoords[index + 1].x;
+          if (Math.abs(nextX - coord.x) > 1 || Math.abs(nextY - coord.y) > 1) {
+            penPickUps++;
+            ctx.moveTo(sortedCoords[index + 1].x, sortedCoords[index + 1].y);
           }
         }
       });
 
+      console.log(penPickUps);
+
       ctx.stroke();
       ctx.closePath();
+      var endTime = performance.now();
+
+      console.log(`${Math.round((endTime - startTime) / 1000)} seconds`);
     };
+
+    function sortTouchingCoords(array, copyObj) {
+      const sortedArray = [];
+      const splicedArray = [...array];
+
+      const slice = splicedArray.splice(0, 1);
+      sortedArray.push(slice[0]);
+      let length = array.length - 1;
+
+      let lastItem = sortedArray[0];
+
+      for (let i = 0; i < length; i++) {
+        const index = splicedArray.findIndex(el => {
+          if (el.x === lastItem.x && (el.y === lastItem.y - 1 || el.y === lastItem.y + 1)) {
+            return el;
+          } else if (el.y === lastItem.y && (el.x === lastItem.x - 1 || el.x === lastItem.x + 1)) {
+            return el;
+          }
+        });
+
+        if (index > -1) {
+          const slice = splicedArray.splice(index, 1)[0];
+          sortedArray.push(slice);
+          lastItem = slice;
+        } else {
+          const index = nextClosestCoord(lastItem);
+          const slice = splicedArray.splice(index, 1)[0];
+          sortedArray.push(slice);
+          lastItem = slice;
+        }
+      }
+      return sortedArray;
+
+      function nextClosestCoord(item) {
+        let index = 0;
+        let lowestVal = 1000;
+
+        for (let i = 0; i < splicedArray.length; i++) {
+          let x = splicedArray[i].x;
+          let y = splicedArray[i].y;
+          let mat = Math.sqrt(Math.pow(item.x - x, 2) + Math.pow(item.y - y, 2));
+          if (mat < 1.5) {
+            index = i;
+            lowestVal = mat;
+            break;
+          } else {
+            if (mat < lowestVal) {
+              index = i;
+              lowestVal = mat;
+            }
+          }
+        }
+
+        return index;
+      }
+    }
 
     // Function to download data to a file
     function download(data, filename, type) {
